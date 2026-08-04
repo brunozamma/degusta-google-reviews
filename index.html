@@ -37,8 +37,6 @@
   .filter-field select, .filter-field input[type=date] {
     padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; background: #fff;
   }
-  .custom-dates { display: none; gap: 8px; }
-  .custom-dates.show { display: flex; }
   .card {
     background: #fff; border-radius: 10px; overflow: hidden;
     box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px;
@@ -105,16 +103,31 @@
       </select>
     </div>
     <div class="filter-field">
-      <label>Período</label>
-      <select id="filterPeriod">
+      <label>Período rápido</label>
+      <select id="filterPeriodPreset">
         <option value="yesterday">Dia anterior</option>
         <option value="last30" selected>Últimos 30 dias</option>
-        <option value="custom">Personalizado</option>
+        <option value="all">Todo o período</option>
       </select>
     </div>
-    <div class="filter-field custom-dates" id="customDates">
-      <div class="filter-field"><label>De</label><input type="date" id="dateFrom"></div>
-      <div class="filter-field"><label>Até</label><input type="date" id="dateTo"></div>
+    <div class="filter-field">
+      <label>De</label>
+      <input type="date" id="dateFrom">
+    </div>
+    <div class="filter-field">
+      <label>Até</label>
+      <input type="date" id="dateTo">
+    </div>
+    <div class="filter-field">
+      <label>Nota</label>
+      <select id="filterStars">
+        <option value="">Todas</option>
+        <option value="5">5 estrelas</option>
+        <option value="4">4 estrelas</option>
+        <option value="3">3 estrelas</option>
+        <option value="2">2 estrelas</option>
+        <option value="1">1 estrela</option>
+      </select>
     </div>
     <div class="filter-field">
       <label>Resposta</label>
@@ -158,34 +171,40 @@ function addDaysStr(dateStr, delta) {
   d.setUTCDate(d.getUTCDate() + delta);
   return d.toISOString().slice(0,10);
 }
+function minDateInData() {
+  return REVIEWS.reduce((a,r)=> r.date < a ? r.date : a, TODAY_STR);
+}
 function starsStr(n) {
   return '★★★★★☆☆☆☆☆'.slice(5-n, 10-n);
 }
 
-function getPeriodRange() {
-  const period = document.getElementById('filterPeriod').value;
-  if (period === 'yesterday') {
+function applyPreset(preset) {
+  if (preset === 'yesterday') {
     const y = addDaysStr(TODAY_STR, -1);
-    return [y, y];
-  } else if (period === 'last30') {
-    return [addDaysStr(TODAY_STR, -31), addDaysStr(TODAY_STR, -1)];
-  } else {
-    const from = document.getElementById('dateFrom').value || '2000-01-01';
-    const to = document.getElementById('dateTo').value || TODAY_STR;
-    return [from, to];
+    document.getElementById('dateFrom').value = y;
+    document.getElementById('dateTo').value = y;
+  } else if (preset === 'last30') {
+    document.getElementById('dateFrom').value = addDaysStr(TODAY_STR, -31);
+    document.getElementById('dateTo').value = addDaysStr(TODAY_STR, -1);
+  } else if (preset === 'all') {
+    document.getElementById('dateFrom').value = minDateInData();
+    document.getElementById('dateTo').value = TODAY_STR;
   }
 }
 
 function applyFilters() {
   const store = document.getElementById('filterStore').value;
-  const [from, to] = getPeriodRange();
+  const from = document.getElementById('dateFrom').value || minDateInData();
+  const to = document.getElementById('dateTo').value || TODAY_STR;
   const replyFilter = document.getElementById('filterReply').value;
+  const starsFilter = document.getElementById('filterStars').value;
 
   currentFiltered = REVIEWS.filter(r => {
     if (store && r.store !== store) return false;
     if (r.date < from || r.date > to) return false;
     if (replyFilter === 'yes' && !r.reply) return false;
     if (replyFilter === 'no' && r.reply) return false;
+    if (starsFilter && r.stars !== parseInt(starsFilter)) return false;
     return true;
   }).sort((a,b) => b.date.localeCompare(a.date));
 
@@ -273,17 +292,19 @@ function renderMore() {
   }
 }
 
-document.getElementById('filterPeriod').addEventListener('change', function() {
-  document.getElementById('customDates').classList.toggle('show', this.value === 'custom');
+document.getElementById('filterPeriodPreset').addEventListener('change', function() {
+  applyPreset(this.value);
   applyFilters();
 });
 document.getElementById('filterStore').addEventListener('change', applyFilters);
 document.getElementById('filterReply').addEventListener('change', applyFilters);
+document.getElementById('filterStars').addEventListener('change', applyFilters);
 document.getElementById('dateFrom').addEventListener('change', applyFilters);
 document.getElementById('dateTo').addEventListener('change', applyFilters);
 document.getElementById('loadMoreBtn').addEventListener('click', renderMore);
 
 document.getElementById('updated').textContent = 'Atualizado em ' + fmtDateBR(TODAY_STR);
+applyPreset('last30');
 applyFilters();
 </script>
 </body>
