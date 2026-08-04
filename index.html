@@ -1,8 +1,217 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head><meta charset="UTF-8"><title>Degusta - Avaliações Google</title></head>
-<body style="font-family: sans-serif; padding: 40px; text-align:center;">
-<h1>Dashboard em construção</h1>
-<p>Este link vai hospedar o painel de avaliações Google das lojas Degusta.</p>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Degusta — Avaliações Google</title>
+<style>
+  :root {
+    --red: #d6291e;
+    --red-tint: #fdeceb;
+    --red-text: #7a1810;
+    --gray: #aaaaaa;
+    --border: #e5e5e5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    margin: 0;
+    background: #f7f7f7;
+    color: #222;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+  h1 {
+    font-size: 20px;
+    margin: 0 0 2px 0;
+  }
+  .updated {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+  }
+  .scope-note {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    color: #7a5c00;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+  .card-header {
+    background: var(--red);
+    color: #fff;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .card-header .sub {
+    font-weight: 400;
+    font-size: 12px;
+    opacity: 0.9;
+    display: block;
+    margin-top: 2px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--red-tint);
+    color: var(--red-text);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.store { white-space: nowrap; }
+  tr.total td {
+    background: var(--red-tint);
+    color: var(--red-text);
+    font-weight: 700;
+    border-bottom: none;
+  }
+  .zero { color: var(--gray); }
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    padding: 12px 16px 16px 16px;
+  }
+  .kpi {
+    text-align: center;
+  }
+  .kpi .val {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--red-text);
+  }
+  .kpi .label {
+    font-size: 11px;
+    color: #888;
+    margin-top: 2px;
+  }
+  footer {
+    font-size: 12px;
+    color: #999;
+    text-align: center;
+    padding: 12px 0 24px 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>📍 Avaliações Google — Degusta</h1>
+  </div>
+  <div class="updated" id="updated"></div>
+
+  <div class="scope-note">
+    Painel cobrindo <strong>3 de 14 lojas</strong> (Candeias, Graças, Parque Dona Lindu) — únicas com acesso direto ao Google Business Profile confirmado até o momento. As demais entram assim que houver acesso.
+  </div>
+
+  <div class="card">
+    <div class="card-header" id="header-yesterday"></div>
+    <div class="kpis" id="kpis-yesterday"></div>
+    <table id="table-yesterday"></table>
+  </div>
+
+  <div class="card">
+    <div class="card-header" id="header-last30"></div>
+    <div class="kpis" id="kpis-last30"></div>
+    <table id="table-last30"></table>
+  </div>
+
+  <footer>
+    Dados coletados diretamente do Google Business Profile (business.google.com), via automação — não passa mais pelo Falaê.<br>
+    Nota: como o Google só exibe tempo relativo ("há X dias"), datas são aproximadas a partir da captura diária.
+  </footer>
+</div>
+
+<script>
+// ---- Dataset (gerado em 2026-08-03) ----
+// Estrutura pensada para permitir novos filtros/períodos no futuro sem redesenho.
+const REPORT_DATE = "2026-08-03"; // data de referência (hoje na captura)
+const YESTERDAY = "2026-08-02";
+const PERIOD30_START = "2026-07-03";
+const PERIOD30_END = "2026-08-02";
+
+const DATA = {
+  yesterday: [
+    { store: "Graças",             count: 4,   avg: 5.0, replyRate: 100 },
+    { store: "Candeias",           count: 3,   avg: 5.0, replyRate: 100 },
+    { store: "Parque Dona Lindu",  count: 1,   avg: 5.0, replyRate: 100 }
+  ],
+  last30: [
+    { store: "Graças",             count: 125, avg: 5.0, replyRate: 88.0 },
+    { store: "Parque Dona Lindu",  count: 55,  avg: 5.0, replyRate: 100 },
+    { store: "Candeias",           count: 53,  avg: 5.0, replyRate: 96.2 }
+  ]
+};
+
+function fmtDateBR(iso) {
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderPeriod(key, headerElId, kpisElId, tableElId, title, subtitle) {
+  const rows = DATA[key];
+  const totalCount = rows.reduce((a,r)=>a+r.count, 0);
+  const totalSum = rows.reduce((a,r)=>a+r.count*r.avg, 0);
+  const totalAvg = totalCount ? (totalSum/totalCount) : 0;
+  const repliedSum = rows.reduce((a,r)=>a + (r.count * (r.replyRate/100)), 0);
+  const totalReplyRate = totalCount ? (repliedSum/totalCount*100) : 0;
+
+  document.getElementById(headerElId).innerHTML = `${title}<span class="sub">${subtitle}</span>`;
+
+  document.getElementById(kpisElId).innerHTML = `
+    <div class="kpi"><div class="val">${totalCount}</div><div class="label">Avaliações</div></div>
+    <div class="kpi"><div class="val">${totalCount ? totalAvg.toFixed(1).replace('.', ',') : '-'}</div><div class="label">Nota média</div></div>
+    <div class="kpi"><div class="val">${totalCount ? totalReplyRate.toFixed(0)+'%' : '-'}</div><div class="label">Taxa resposta</div></div>
+  `;
+
+  const sorted = [...rows].sort((a,b)=> b.count - a.count);
+  let html = `<tr><th>Loja</th><th class="num">Aval.</th><th class="num">Média</th><th class="num">Resp.</th></tr>`;
+  sorted.forEach(r => {
+    if (r.count === 0) {
+      html += `<tr><td class="store zero">${r.store}</td><td class="num zero">0</td><td class="num zero">-</td><td class="num zero">-</td></tr>`;
+    } else {
+      html += `<tr><td class="store">${r.store}</td><td class="num">${r.count}</td><td class="num">${r.avg.toFixed(1).replace('.', ',')}</td><td class="num">${r.replyRate.toFixed(0)}%</td></tr>`;
+    }
+  });
+  html += `<tr class="total"><td>Total</td><td class="num">${totalCount}</td><td class="num">${totalCount ? totalAvg.toFixed(1).replace('.', ',') : '-'}</td><td class="num">${totalCount ? totalReplyRate.toFixed(0)+'%' : '-'}</td></tr>`;
+  document.getElementById(tableElId).innerHTML = html;
+}
+
+renderPeriod('yesterday', 'header-yesterday', 'kpis-yesterday', 'table-yesterday',
+  'Dia anterior', fmtDateBR(YESTERDAY));
+renderPeriod('last30', 'header-last30', 'kpis-last30', 'table-last30',
+  'Últimos 30 dias', `${fmtDateBR(PERIOD30_START)} a ${fmtDateBR(PERIOD30_END)}`);
+
+document.getElementById('updated').textContent = `Atualizado em ${fmtDateBR(REPORT_DATE)}`;
+</script>
 </body>
 </html>
